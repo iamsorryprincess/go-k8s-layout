@@ -113,8 +113,8 @@ func TestParse(t *testing.T) {
 			continue
 		}
 
-		if cfg.APIKey != tc.expectedValue.APIKey {
-			t.Errorf("expected APIKey %s; actual APIKey: %s", tc.expectedValue.APIKey, cfg.APIKey)
+		if cfg != tc.expectedValue {
+			t.Errorf("expected value %v; actual value: %v", tc.expectedValue, cfg)
 		}
 	}
 }

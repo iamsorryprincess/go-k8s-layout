@@ -15,7 +15,7 @@ func Parse[TConfig any]() (TConfig, error) {
 	v := reflect.ValueOf(&config).Elem()
 
 	if v.Kind() != reflect.Struct {
-		return config, fmt.Errorf("Config must be a struct")
+		return config, fmt.Errorf("config must be a struct")
 	}
 
 	if err := parseStruct("", v); err != nil {
