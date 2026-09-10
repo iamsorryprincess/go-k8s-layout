@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"os"
+
+	"github.com/iamsorryprincess/go-k8s-layout/pkg/background"
+)
 
 func main() {
-	fmt.Println("test")
+	os.Exit(background.Run(NewApp))
 }
