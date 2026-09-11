@@ -1,4 +1,4 @@
-package main
+package api
 
 import "github.com/iamsorryprincess/go-k8s-layout/pkg/database/postgres"
 

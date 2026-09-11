@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type App struct {
 	postgresPool *postgres.Pool
 }
 
-func NewApp(config Config, logger log.Logger) *App {
+func New(config Config, logger log.Logger) *App {
 	return &App{
 		config: config,
 		logger: logger,
