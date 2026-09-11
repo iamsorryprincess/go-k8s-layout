@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/background"
+	"github.com/iamsorryprincess/go-k8s-layout/pkg/database/postgres"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/log"
 )
 
@@ -12,6 +13,8 @@ type App struct {
 
 	config Config
 	logger log.Logger
+
+	postgresPool *postgres.Pool
 }
 
 func NewApp(config Config, logger log.Logger) *App {
@@ -21,6 +24,15 @@ func NewApp(config Config, logger log.Logger) *App {
 	}
 }
 
-func (a *App) Run(ctx context.Context, fatal chan<- error) error {
+func (a *App) Run(_ context.Context, _ chan<- error) error {
+	var err error
+
+	if a.postgresPool, err = postgres.NewPool(a.config.Postgres, a.logger); err != nil {
+		return err
+	}
+
+	a.DeferCloser(a.postgresPool)
+	a.logger.Info().Msg("postgres connected")
+
 	return nil
 }

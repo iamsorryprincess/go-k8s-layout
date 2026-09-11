@@ -10,11 +10,11 @@ type BaseApp struct {
 	closers []Closer
 }
 
-func (a BaseApp) DeferCloser(closer Closer) {
+func (a *BaseApp) DeferCloser(closer Closer) {
 	a.closers = append(a.closers, closer)
 }
 
-func (a BaseApp) Close() {
+func (a *BaseApp) Close() {
 	if len(a.closers) == 0 {
 		return
 	}

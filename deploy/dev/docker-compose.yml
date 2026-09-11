@@ -1,0 +1,22 @@
+name: dev-infrastructure
+
+services:
+  postgres:
+    image: postgres:18.6-trixie
+    container_name: dev-postgres
+    shm_size: 256mb
+    environment:
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test
+      - POSTGRES_DB=testdb
+    ports:
+     - "5432:5432"
+    networks:
+      - dev-network
+    volumes:
+      - ../../../volumes/dev/postgres:/var/lib/postgresql
+
+networks:
+  dev-network:
+    name: dev-network
+    driver: bridge
