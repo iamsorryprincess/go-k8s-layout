@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/background"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/database/postgres"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/log"
+	httptransport "github.com/iamsorryprincess/go-k8s-layout/pkg/transport/http"
 )
 
 type App struct {
@@ -15,6 +17,8 @@ type App struct {
 	logger log.Logger
 
 	postgresPool *postgres.Pool
+
+	httpServer *httptransport.Server
 }
 
 func New(config Config, logger log.Logger) *App {
@@ -24,7 +28,7 @@ func New(config Config, logger log.Logger) *App {
 	}
 }
 
-func (a *App) Run(_ context.Context, _ chan<- error) error {
+func (a *App) Run(_ context.Context, fatal chan<- error) error {
 	var err error
 
 	if a.postgresPool, err = postgres.NewPool(a.config.Postgres, a.logger); err != nil {
@@ -33,6 +37,19 @@ func (a *App) Run(_ context.Context, _ chan<- error) error {
 
 	a.DeferCloser(a.postgresPool)
 	a.logger.Info().Msg("postgres connected")
+
+	router := http.NewServeMux()
+	router.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	a.httpServer = httptransport.New(a.config.HTTP, a.logger, router)
+	if err = a.httpServer.Start(fatal); err != nil {
+		return err
+	}
+
+	a.DeferCloser(a.httpServer)
+	a.logger.Info().Msg("http server started")
 
 	return nil
 }

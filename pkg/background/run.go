@@ -35,11 +35,11 @@ func Run[TConfig any, TApp App](createAppFunc CreateAppFunc[TConfig, TApp]) int 
 	app := createAppFunc(cfg, logger)
 	defer app.Close()
 
-	fatal := make(chan error, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	logger.Info().Msg("app starting")
+	fatal := make(chan error, 1)
 
 	if err = app.Run(ctx, fatal); err != nil {
 		logger.Error().Err(err).Msg("failed start app")
