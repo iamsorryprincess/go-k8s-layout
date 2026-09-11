@@ -16,12 +16,12 @@ test:
 	go test -count=1 $(test_flags) ./internal/... ./pkg/...
 
 # Backend dev deploy dir
-backend_dev_dir = deploy/dev
+backend_dev_dir = deploy/docker
 
 .PHONY: dev-infrastructure-run
 dev-infrastructure-run:
-	docker compose -f $(backend_dev_dir)/docker-compose.yml -p dev-infrastructure up -d
+	docker compose -f $(backend_dev_dir)/docker-compose.yaml -p dev-infrastructure up -d
 
 .PHONY: dev-infrastructure-down
 dev-infrastructure-down:
-	docker compose -f $(backend_dev_dir)/docker-compose.yml -p dev-infrastructure down
+	docker compose -f $(backend_dev_dir)/docker-compose.yaml -p dev-infrastructure down
