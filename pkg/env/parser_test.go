@@ -118,3 +118,99 @@ func TestParse(t *testing.T) {
 		}
 	}
 }
+
+// TestParseWithoutDefaultsAndEnv checks that fields with a tag without a default
+// value keep their zero values when the env variable is not set.
+func TestParseWithoutDefaultsAndEnv(t *testing.T) {
+	os.Clearenv()
+
+	cfg, err := Parse[testConfig]()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedValue := testConfig{
+		HTTP: testHTTPConfig{
+			Port:    8080,
+			Timeout: 5 * time.Second,
+		},
+		Interval1: 10 * time.Minute,
+		Interval2: time.Hour,
+	}
+
+	if cfg != expectedValue {
+		t.Errorf("expected value %v; actual value: %v", expectedValue, cfg)
+	}
+}
+
+type testDefaultsConfig struct {
+	Empty     string        `env:"EMPTY,"`
+	WithComma string        `env:"WITH_COMMA,a,b,c"`
+	Duration  time.Duration `env:"DURATION,1s"`
+}
+
+func TestParseDefaults(t *testing.T) {
+	testCases := []struct {
+		name          string
+		prepareEnv    func()
+		expectedValue testDefaultsConfig
+	}{
+		{
+			name:       "defaults are used when env is not set",
+			prepareEnv: func() {},
+			expectedValue: testDefaultsConfig{
+				WithComma: "a,b,c",
+				Duration:  time.Second,
+			},
+		},
+		{
+			name: "env overrides defaults",
+			prepareEnv: func() {
+				os.Setenv("EMPTY", "not-empty")
+				os.Setenv("WITH_COMMA", "x")
+				os.Setenv("DURATION", "2m")
+			},
+			expectedValue: testDefaultsConfig{
+				Empty:     "not-empty",
+				WithComma: "x",
+				Duration:  2 * time.Minute,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			os.Clearenv()
+			tc.prepareEnv()
+
+			cfg, err := Parse[testDefaultsConfig]()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if cfg != tc.expectedValue {
+				t.Errorf("expected value %v; actual value: %v", tc.expectedValue, cfg)
+			}
+		})
+	}
+}
+
+func TestParseInvalidTag(t *testing.T) {
+	os.Clearenv()
+
+	type invalidConfig struct {
+		Value string `env:",default"`
+	}
+
+	if _, err := Parse[invalidConfig](); err == nil {
+		t.Error("expected an error for an env tag without a name; got nil")
+	}
+}
+
+func TestParseNotStruct(t *testing.T) {
+	os.Clearenv()
+
+	if _, err := Parse[string](); err == nil {
+		t.Error("expected an error for a non-struct config; got nil")
+	}
+}

@@ -8,6 +8,13 @@ tools:
 lint:
 	./.bin/golangci-lint run ./cmd/... ./internal/... ./pkg/... -c .golangci.yaml
 
+# Extra flags for the test target, e.g. make test test_flags="-race -v"
+test_flags =
+
+.PHONY: test
+test:
+	go test -count=1 $(test_flags) ./internal/... ./pkg/...
+
 # Backend dev deploy dir
 backend_dev_dir = deploy/dev
 

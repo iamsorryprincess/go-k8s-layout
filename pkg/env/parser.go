@@ -37,13 +37,14 @@ func parseStruct(prefix string, v reflect.Value) error {
 			continue
 		}
 
-		tagValues := strings.Split(tagValue, ",")
-		if len(tagValues) == 0 {
-			return fmt.Errorf("invalid env tag values for %s", tagValue)
+		// tag format: "NAME" or "NAME,DEFAULT".
+		// Cut is used instead of Split so commas inside a default value are kept.
+		tagName, defaultValue, hasDefault := strings.Cut(tagValue, ",")
+		if tagName == "" {
+			return fmt.Errorf("invalid env tag value %q for field %s", tagValue, fieldType.Name)
 		}
 
-		tagValue = tagValues[0]
-		envPrefix := prefix + tagValue
+		envPrefix := prefix + tagName
 
 		if fieldValue.Kind() == reflect.Struct {
 			if err := parseStruct(envPrefix+"_", fieldValue); err != nil {
@@ -59,10 +60,15 @@ func parseStruct(prefix string, v reflect.Value) error {
 
 		envValue := os.Getenv(envPrefix)
 		if envValue == "" {
-			if len(tagValues) < 1 {
+			if !hasDefault {
 				continue
 			}
-			envValue = tagValues[1]
+
+			envValue = defaultValue
+		}
+
+		if envValue == "" {
+			continue
 		}
 
 		switch fieldValue.Kind() {
