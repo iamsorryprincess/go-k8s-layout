@@ -6,28 +6,26 @@ import (
 )
 
 type Router struct {
-	mux *http.ServeMux
+	mux         *http.ServeMux
+	handler     http.Handler
+	middlewares []func(http.Handler) http.Handler
 }
 
 func NewRouter() *Router {
+	mux := http.NewServeMux()
 	return &Router{
-		mux: http.NewServeMux(),
+		mux:     mux,
+		handler: mux,
 	}
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.mux.ServeHTTP(w, req)
+	r.handler.ServeHTTP(w, req)
 }
 
 func (r *Router) Use(middleware func(http.Handler) http.Handler) *Router {
-	handler := middleware(r.mux)
-
-	mux, ok := handler.(*http.ServeMux)
-	if !ok {
-		panic("unexpected behavior: http.Handler is not http.Mux")
-	}
-
-	r.mux = mux
+	r.middlewares = append(r.middlewares, middleware)
+	r.handler = withHandler(r.mux, r.middlewares...)
 	return r
 }
 

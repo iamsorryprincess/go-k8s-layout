@@ -27,7 +27,7 @@ type Server struct {
 	wg sync.WaitGroup
 }
 
-func New(config ServerConfig, logger log.Logger, handler http.Handler) *Server {
+func NewServer(config ServerConfig, logger log.Logger, handler http.Handler) *Server {
 	return &Server{
 		config: config,
 		logger: logger,

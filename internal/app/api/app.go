@@ -3,10 +3,12 @@ package api
 import (
 	"context"
 
+	postgresrepo "github.com/iamsorryprincess/go-k8s-layout/internal/repository/postgres"
+	httptransport "github.com/iamsorryprincess/go-k8s-layout/internal/transport/http"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/background"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/database/postgres"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/log"
-	httptransport "github.com/iamsorryprincess/go-k8s-layout/pkg/transport/http"
+	"github.com/iamsorryprincess/go-k8s-layout/pkg/transport/http"
 )
 
 type App struct {
@@ -17,7 +19,9 @@ type App struct {
 
 	postgresPool *postgres.Pool
 
-	httpServer *httptransport.Server
+	userRepo *postgresrepo.UserRepository
+
+	httpServer *http.Server
 }
 
 func New(config Config, logger log.Logger) *App {
@@ -37,6 +41,8 @@ func (a *App) Run(_ context.Context, fatal chan<- error) error {
 	a.DeferCloser(a.postgresPool)
 	a.logger.Info().Msg("postgres connected")
 
+	a.userRepo = postgresrepo.NewUserRepository(a.postgresPool)
+
 	if err = a.initHTTP(fatal); err != nil {
 		return err
 	}
@@ -45,7 +51,16 @@ func (a *App) Run(_ context.Context, fatal chan<- error) error {
 }
 
 func (a *App) initHTTP(fatal chan<- error) error {
-	a.httpServer = httptransport.New(a.config.HTTP, a.logger, nil)
+	router := http.NewRouter().
+		Use(http.Recovery(a.logger)).
+		Use(http.CORS)
+
+	users := httptransport.NewUserHandler(a.logger, a.userRepo)
+	router.HandleFunc("GET /users/{id}", users.GetUser).
+		HandleFunc("GET /users", users.GetUsers).
+		HandleFunc("POST /users", users.CreateUser)
+
+	a.httpServer = http.NewServer(a.config.HTTP, a.logger, router)
 	if err := a.httpServer.Start(fatal); err != nil {
 		return err
 	}
