@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-
 	postgresrepo "github.com/iamsorryprincess/go-k8s-layout/internal/repository/postgres"
 	httptransport "github.com/iamsorryprincess/go-k8s-layout/internal/transport/http"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/background"
@@ -21,7 +19,8 @@ type App struct {
 
 	userRepo *postgresrepo.UserRepository
 
-	httpServer *http.Server
+	httpServer       *http.Server
+	httpHealthServer *http.Server
 }
 
 func New(config Config, logger log.Logger) *App {
@@ -31,7 +30,7 @@ func New(config Config, logger log.Logger) *App {
 	}
 }
 
-func (a *App) Run(_ context.Context, fatal chan<- error) error {
+func (a *App) Run(ctx background.AppCtx) error {
 	var err error
 
 	if a.postgresPool, err = postgres.NewPool(a.config.Postgres, a.logger); err != nil {
@@ -43,14 +42,29 @@ func (a *App) Run(_ context.Context, fatal chan<- error) error {
 
 	a.userRepo = postgresrepo.NewUserRepository(a.postgresPool)
 
-	if err = a.initHTTP(fatal); err != nil {
+	if err = a.initHTTP(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (a *App) initHTTP(fatal chan<- error) error {
+func (a *App) initHTTP(ctx background.AppCtx) error {
+	health := http.NewHealthHandler(a.logger).
+		UseLivez(a.config.KubeHealth.HTTP.Livez).
+		UseReadyz(a.config.KubeHealth.HTTP.Readyz,
+			http.NewAppRunningCheck(ctx),
+			http.NewCheck("db", a.postgresPool.Ping),
+		).
+		UseStartupz(a.config.KubeHealth.HTTP.Startupz)
+
+	a.httpHealthServer = http.NewServer(a.config.KubeHealth.HTTP.Server, a.logger, health)
+	if err := a.httpHealthServer.Start(ctx.Fatal()); err != nil {
+		return err
+	}
+
+	a.DeferCloser(a.httpHealthServer)
+
 	router := http.NewRouter().
 		Use(http.Recovery(a.logger)).
 		Use(http.CORS)
@@ -61,12 +75,11 @@ func (a *App) initHTTP(fatal chan<- error) error {
 		HandleFunc("POST /users", users.CreateUser)
 
 	a.httpServer = http.NewServer(a.config.HTTP, a.logger, router)
-	if err := a.httpServer.Start(fatal); err != nil {
+	if err := a.httpServer.Start(ctx.Fatal()); err != nil {
 		return err
 	}
 
 	a.DeferCloser(a.httpServer)
-	a.logger.Info().Msg("http server started")
 
 	return nil
 }

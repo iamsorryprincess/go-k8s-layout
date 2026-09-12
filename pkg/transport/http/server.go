@@ -13,7 +13,8 @@ import (
 )
 
 type ServerConfig struct {
-	Addr string `env:"ADDR,:8080"`
+	Addr  string `env:"ADDR,:8080"`
+	Label string `env:"LABEL,app"`
 
 	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT,10s"`
 }
@@ -52,27 +53,29 @@ func (s *Server) Start(fatal chan<- error) error {
 		}
 	})
 
+	s.logger.Info().Str("label", s.config.Label).Msg("http server started")
+
 	return nil
 }
 
 func (s *Server) Close() {
 	defer s.wg.Wait()
-	s.logger.Info().Msg("http server stopping")
+	s.logger.Info().Str("label", s.config.Label).Msg("http server stopping")
 
 	ctx, cancel := context.WithTimeout(context.Background(), s.config.ShutdownTimeout)
 	defer cancel()
 
 	if err := s.server.Shutdown(ctx); err != nil {
-		s.logger.Error().Err(err).Msg("http server shutdown failed")
+		s.logger.Error().Err(err).Str("label", s.config.Label).Msg("http server shutdown failed")
 
 		if err = s.server.Close(); err != nil {
-			s.logger.Error().Err(err).Msg("http server force close failed")
+			s.logger.Error().Err(err).Str("label", s.config.Label).Msg("http server force close failed")
 			return
 		}
 
-		s.logger.Info().Msg("http server force stopped")
+		s.logger.Info().Str("label", s.config.Label).Msg("http server force stopped")
 		return
 	}
 
-	s.logger.Info().Msg("http server stopped")
+	s.logger.Info().Str("label", s.config.Label).Msg("http server stopped")
 }
