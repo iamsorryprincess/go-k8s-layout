@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/iamsorryprincess/go-k8s-layout/internal/domain"
-	"github.com/iamsorryprincess/go-k8s-layout/internal/repository"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/database/postgres"
 	"github.com/jackc/pgx/v5"
 )
@@ -27,7 +26,7 @@ func (r *UserRepository) GetUser(ctx context.Context, id uint64) (domain.User, e
 	var user domain.User
 	if err := r.pool.QueryRow(ctx, query, id).Scan(&user.ID, &user.Name); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.User{}, fmt.Errorf("postgres: get user %d: %w", id, repository.ErrNotFound)
+			return domain.User{}, fmt.Errorf("postgres: get user %d: %w", id, domain.ErrNotFound)
 		}
 
 		return domain.User{}, fmt.Errorf("postgres: get user %d: %w", id, err)

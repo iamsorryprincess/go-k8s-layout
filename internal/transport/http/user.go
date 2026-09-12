@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/iamsorryprincess/go-k8s-layout/internal/domain"
-	"github.com/iamsorryprincess/go-k8s-layout/internal/repository"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/log"
 )
 
@@ -56,7 +55,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.provider.GetUser(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			h.writeJSON(w, r, http.StatusNotFound, errorResponse{Error: "user not found"})
 			return
 		}
