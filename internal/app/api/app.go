@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/background"
 	"github.com/iamsorryprincess/go-k8s-layout/pkg/database/postgres"
@@ -38,13 +37,16 @@ func (a *App) Run(_ context.Context, fatal chan<- error) error {
 	a.DeferCloser(a.postgresPool)
 	a.logger.Info().Msg("postgres connected")
 
-	router := http.NewServeMux()
-	router.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
+	if err = a.initHTTP(fatal); err != nil {
+		return err
+	}
 
-	a.httpServer = httptransport.New(a.config.HTTP, a.logger, router)
-	if err = a.httpServer.Start(fatal); err != nil {
+	return nil
+}
+
+func (a *App) initHTTP(fatal chan<- error) error {
+	a.httpServer = httptransport.New(a.config.HTTP, a.logger, nil)
+	if err := a.httpServer.Start(fatal); err != nil {
 		return err
 	}
 

@@ -37,8 +37,6 @@ func parseStruct(prefix string, v reflect.Value) error {
 			continue
 		}
 
-		// tag format: "NAME" or "NAME,DEFAULT".
-		// Cut is used instead of Split so commas inside a default value are kept.
 		tagName, defaultValue, hasDefault := strings.Cut(tagValue, ",")
 		if tagName == "" {
 			return fmt.Errorf("invalid env tag value %q for field %s", tagValue, fieldType.Name)
@@ -114,7 +112,7 @@ func parseStruct(prefix string, v reflect.Value) error {
 			fieldValue.SetFloat(floatValue)
 
 		case reflect.Bool:
-			fieldValue.SetBool(envValue == "true")
+			fieldValue.SetBool(strings.ToLower(envValue) == "true")
 
 		default:
 			return fmt.Errorf(
