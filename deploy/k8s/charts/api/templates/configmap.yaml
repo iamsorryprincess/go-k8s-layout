@@ -12,7 +12,6 @@ data:
   HTTP_SHUTDOWN_TIMEOUT: {{ printf "%vs" .Values.app.shutdownTimeoutSeconds | quote }}
 
   K8S_HTTP_SERVER_ADDR: {{ printf ":%v" .Values.probe.port | quote }}
-  K8S_HTTP_SERVER_LABEL: "healthcheck"
   K8S_HTTP_LIVEZ_PATH: {{ .Values.probe.livez.path | quote }}
   K8S_HTTP_READYZ_PATH: {{ .Values.probe.readyz.path | quote }}
   K8S_HTTP_READYZ_TIMEOUT: {{ .Values.probe.readyz.checkTimeout | quote }}

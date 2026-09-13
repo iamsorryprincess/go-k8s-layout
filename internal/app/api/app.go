@@ -58,7 +58,7 @@ func (a *App) initHTTP(ctx background.AppCtx) error {
 		).
 		UseStartupz(a.config.KubeHealth.HTTP.Startupz)
 
-	a.httpHealthServer = http.NewServer(a.config.KubeHealth.HTTP.Server, a.logger, health)
+	a.httpHealthServer = http.NewServer(a.config.KubeHealth.HTTP.Server.ServerConfig(), a.logger, health)
 	if err := a.httpHealthServer.Start(ctx.Fatal()); err != nil {
 		return err
 	}

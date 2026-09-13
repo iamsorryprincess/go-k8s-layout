@@ -44,6 +44,17 @@ func NewAppRunningCheck(checker AppRunningChecker) Check {
 	})
 }
 
+type HealthServerConfig struct {
+	Addr  string `env:"ADDR,:8081"`
+	Label string `env:"LABEL,healthcheck"`
+
+	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT,5s"`
+}
+
+func (c HealthServerConfig) ServerConfig() ServerConfig {
+	return ServerConfig(c)
+}
+
 type LivezConfig struct {
 	Path string `env:"PATH,/livez"`
 

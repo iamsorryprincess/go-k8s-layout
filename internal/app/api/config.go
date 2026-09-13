@@ -6,10 +6,10 @@ import (
 )
 
 type HealthHTTPConfig struct {
-	Server   http.ServerConfig   `env:"SERVER"`
-	Livez    http.LivezConfig    `env:"LIVEZ"`
-	Readyz   http.ReadyzConfig   `env:"READYZ"`
-	Startupz http.StartupzConfig `env:"STARTUPZ"`
+	Server   http.HealthServerConfig `env:"SERVER"`
+	Livez    http.LivezConfig        `env:"LIVEZ"`
+	Readyz   http.ReadyzConfig       `env:"READYZ"`
+	Startupz http.StartupzConfig     `env:"STARTUPZ"`
 }
 
 type KubeHealthConfig struct {
