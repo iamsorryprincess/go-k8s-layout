@@ -2,9 +2,13 @@ environments:
   minikube:
     values:
       - namespace: dev
+        kubeContext: minikube
         imageTag: {{ env "IMAGE_TAG" | default "dev" }}
         imagePullPolicy: IfNotPresent
 ---
+helmDefaults:
+  kubeContext: {{ .Values.kubeContext }}
+
 releases:
   - name: postgres
     namespace: {{ .Values.namespace }}
