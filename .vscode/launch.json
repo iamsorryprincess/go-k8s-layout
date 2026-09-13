@@ -12,6 +12,15 @@
             "console": "integratedTerminal",
             "program": "${workspaceFolder}/cmd/api/.",
             "envFile": "${workspaceFolder}/cmd/api/.env"
+        },
+        {
+            "name": "migrator",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}/cmd/migrator/.",
+            "envFile": "${workspaceFolder}/cmd/migrator/.env"
         }
     ]
 }

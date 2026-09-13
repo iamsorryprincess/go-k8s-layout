@@ -8,7 +8,6 @@
 
 deploy
 scripts
-migrations
 
 *.env
 .env

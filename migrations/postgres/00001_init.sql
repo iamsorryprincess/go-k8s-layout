@@ -1,4 +1,8 @@
-CREATE TABLE IF NOT EXISTS users (
+-- +goose Up
+CREATE TABLE users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(50) NOT NULL
 );
+
+-- +goose Down
+DROP TABLE users;
