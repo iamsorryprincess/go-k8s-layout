@@ -1,0 +1,112 @@
+replicaCount: 2
+
+image:
+  repository: api
+  tag: ""
+  pullPolicy: IfNotPresent
+
+app:
+  logLevel: info
+  preShutdownDelaySeconds: 5
+  shutdownTimeoutSeconds: 10
+  gracePeriodBufferSeconds: 10
+
+terminationGracePeriodSeconds:
+
+database:
+  existingSecret: postgres
+  urlKey: DB_URL
+  pool:
+    maxConns: 10
+    minConns: 5
+    minIdleConns: 5
+
+http:
+  port: 8080
+
+probe:
+  port: 8081
+  livez:
+    path: /livez
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readyz:
+    path: /readyz
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 2
+    checkTimeout: 1s
+    logInterval: 1m
+  startupz:
+    path: /startupz
+    periodSeconds: 2
+    failureThreshold: 30
+
+service:
+  type: ClusterIP
+  port: 80
+
+extraEnv: {}
+
+migration:
+  enabled: true
+  image:
+    repository: migrator
+    tag: ""
+    pullPolicy: IfNotPresent
+  command: up
+  timeout: 5m
+  backoffLimit: 3
+  hookDeletePolicy: before-hook-creation
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+serviceAccount:
+  create: true
+  name: ""
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

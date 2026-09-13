@@ -1,0 +1,13 @@
+PostgreSQL {{ .Chart.AppVersion }} released as {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+In cluster address:
+
+  {{ include "postgres.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+The connection string for applications is stored in the secret {{ include "postgres.secretName" . }}, key DB_URL:
+
+  kubectl get secret -n {{ .Release.Namespace }} {{ include "postgres.secretName" . }} -o jsonpath='{.data.DB_URL}' | base64 -d
+
+Open a psql shell:
+
+  kubectl exec -it -n {{ .Release.Namespace }} statefulset/{{ include "postgres.fullname" . }} -- psql -U {{ .Values.auth.username }} -d {{ .Values.auth.database }}

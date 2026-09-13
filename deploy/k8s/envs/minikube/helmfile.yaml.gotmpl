@@ -1,0 +1,27 @@
+environments:
+  minikube:
+    values:
+      - namespace: dev
+        imageTag: {{ env "IMAGE_TAG" | default "dev" }}
+        imagePullPolicy: IfNotPresent
+---
+releases:
+  - name: postgres
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: ../../charts/postgres
+    values:
+      - postgres.values.yaml
+    wait: true
+    timeout: 300
+
+  - name: api
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: ../../charts/api
+    needs:
+      - {{ .Values.namespace }}/postgres
+    values:
+      - api.values.yaml.gotmpl
+    wait: true
+    timeout: 300

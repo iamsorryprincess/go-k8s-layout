@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "api chart values",
+  "type": "object",
+  "required": ["image", "app", "database", "http", "probe", "service", "migration"],
+  "properties": {
+    "replicaCount": { "type": "integer", "minimum": 1 },
+    "image": {
+      "type": "object",
+      "required": ["repository"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "app": {
+      "type": "object",
+      "required": ["logLevel", "preShutdownDelaySeconds", "shutdownTimeoutSeconds", "gracePeriodBufferSeconds"],
+      "properties": {
+        "logLevel": { "type": "string", "enum": ["debug", "info", "warning", "error"] },
+        "preShutdownDelaySeconds": { "type": "integer", "minimum": 0 },
+        "shutdownTimeoutSeconds": { "type": "integer", "minimum": 1 },
+        "gracePeriodBufferSeconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "terminationGracePeriodSeconds": { "type": ["integer", "null"], "minimum": 1 },
+    "database": {
+      "type": "object",
+      "required": ["existingSecret", "urlKey"],
+      "properties": {
+        "existingSecret": { "type": "string", "minLength": 1 },
+        "urlKey": { "type": "string", "minLength": 1 },
+        "pool": {
+          "type": "object",
+          "properties": {
+            "maxConns": { "type": "integer", "minimum": 1 },
+            "minConns": { "type": "integer", "minimum": 0 },
+            "minIdleConns": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "http": {
+      "type": "object",
+      "required": ["port"],
+      "properties": { "port": { "type": "integer", "minimum": 1, "maximum": 65535 } }
+    },
+    "probe": {
+      "type": "object",
+      "required": ["port", "livez", "readyz", "startupz"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "livez": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string", "pattern": "^/" } } },
+        "readyz": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string", "pattern": "^/" } } },
+        "startupz": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string", "pattern": "^/" } } }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": ["type", "port"],
+      "properties": {
+        "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"] },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      }
+    },
+    "migration": {
+      "type": "object",
+      "required": ["enabled", "image", "command"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "command": { "type": "string", "enum": ["up", "status", "version"] },
+        "backoffLimit": { "type": "integer", "minimum": 0 },
+        "hookDeletePolicy": { "type": "string" },
+        "timeout": { "type": "string" },
+        "image": {
+          "type": "object",
+          "required": ["repository"],
+          "properties": {
+            "repository": { "type": "string", "minLength": 1 },
+            "tag": { "type": "string" },
+            "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+          }
+        }
+      }
+    },
+    "extraEnv": { "type": "object", "additionalProperties": { "type": ["string", "integer", "boolean"] } }
+  }
+}

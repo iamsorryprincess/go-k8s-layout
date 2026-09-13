@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "api.fullname" . }}
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "api.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "api.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ include "api.terminationGracePeriodSeconds" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: api
+          image: {{ include "api.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "api.fullname" . }}
+          env:
+            {{- include "api.databaseEnv" . | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.http.port }}
+              protocol: TCP
+            - name: probe
+              containerPort: {{ .Values.probe.port }}
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probe.startupz.path }}
+              port: probe
+            periodSeconds: {{ .Values.probe.startupz.periodSeconds }}
+            failureThreshold: {{ .Values.probe.startupz.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probe.readyz.path }}
+              port: probe
+            periodSeconds: {{ .Values.probe.readyz.periodSeconds }}
+            timeoutSeconds: {{ .Values.probe.readyz.timeoutSeconds }}
+            failureThreshold: {{ .Values.probe.readyz.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probe.livez.path }}
+              port: probe
+            periodSeconds: {{ .Values.probe.livez.periodSeconds }}
+            timeoutSeconds: {{ .Values.probe.livez.timeoutSeconds }}
+            failureThreshold: {{ .Values.probe.livez.failureThreshold }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

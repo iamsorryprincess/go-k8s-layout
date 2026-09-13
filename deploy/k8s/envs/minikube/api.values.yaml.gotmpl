@@ -1,0 +1,33 @@
+replicaCount: 2
+
+image:
+  repository: api
+  tag: {{ .Values.imageTag | quote }}
+  pullPolicy: {{ .Values.imagePullPolicy }}
+
+app:
+  logLevel: debug
+  preShutdownDelaySeconds: 5
+  shutdownTimeoutSeconds: 10
+
+database:
+  existingSecret: postgres
+  urlKey: DB_URL
+  pool:
+    maxConns: 5
+    minConns: 1
+    minIdleConns: 1
+
+migration:
+  enabled: true
+  image:
+    repository: migrator
+    tag: {{ .Values.imageTag | quote }}
+    pullPolicy: {{ .Values.imagePullPolicy }}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi

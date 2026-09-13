@@ -39,3 +39,29 @@ docker-build:
 .PHONY: minikube-load
 minikube-load: docker-build
 	minikube image load $(service):$(tag)
+
+# Kubernetes environment, e.g. make k8s-up env=minikube image_tag=dev
+env = minikube
+image_tag = dev
+helmfile = ./.bin/helmfile -f deploy/k8s/envs/$(env)/helmfile.yaml.gotmpl -e $(env)
+
+.PHONY: k8s-images
+k8s-images:
+	$(MAKE) minikube-load service=api tag=$(image_tag)
+	$(MAKE) minikube-load service=migrator tag=$(image_tag)
+
+.PHONY: k8s-diff
+k8s-diff:
+	IMAGE_TAG=$(image_tag) $(helmfile) diff
+
+.PHONY: k8s-up
+k8s-up:
+	IMAGE_TAG=$(image_tag) $(helmfile) apply
+
+.PHONY: k8s-down
+k8s-down:
+	IMAGE_TAG=$(image_tag) $(helmfile) destroy
+
+.PHONY: k8s-template
+k8s-template:
+	IMAGE_TAG=$(image_tag) $(helmfile) template

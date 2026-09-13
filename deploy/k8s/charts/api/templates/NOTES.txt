@@ -1,0 +1,22 @@
+{{ .Chart.Name }} {{ .Values.image.tag | default .Chart.AppVersion }} released as {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+In cluster address:
+
+  {{ include "api.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+Reach the API from your machine:
+
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "api.fullname" . }} 8080:{{ .Values.service.port }}
+  curl localhost:8080/users
+
+Probes are served on port {{ .Values.probe.port }} and are not exposed through the service:
+
+  kubectl port-forward -n {{ .Release.Namespace }} deployment/{{ include "api.fullname" . }} 8081:{{ .Values.probe.port }}
+  curl localhost:8081{{ .Values.probe.readyz.path }}
+
+{{- if .Values.migration.enabled }}
+
+Migrations ran as a pre-upgrade hook job. Its logs:
+
+  kubectl logs -n {{ .Release.Namespace }} job/{{ include "api.fullname" . }}-migration
+{{- end }}

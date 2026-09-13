@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "api.fullname" . }}
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+data:
+  LOG_LEVEL: {{ .Values.app.logLevel | quote }}
+  PRE_SHUTDOWN_DELAY: {{ printf "%vs" .Values.app.preShutdownDelaySeconds | quote }}
+
+  HTTP_ADDR: {{ printf ":%v" .Values.http.port | quote }}
+  HTTP_SHUTDOWN_TIMEOUT: {{ printf "%vs" .Values.app.shutdownTimeoutSeconds | quote }}
+
+  K8S_HTTP_SERVER_ADDR: {{ printf ":%v" .Values.probe.port | quote }}
+  K8S_HTTP_SERVER_LABEL: "healthcheck"
+  K8S_HTTP_LIVEZ_PATH: {{ .Values.probe.livez.path | quote }}
+  K8S_HTTP_READYZ_PATH: {{ .Values.probe.readyz.path | quote }}
+  K8S_HTTP_READYZ_TIMEOUT: {{ .Values.probe.readyz.checkTimeout | quote }}
+  K8S_HTTP_READYZ_LOG_INTERVAL: {{ .Values.probe.readyz.logInterval | quote }}
+  K8S_HTTP_STARTUPZ_PATH: {{ .Values.probe.startupz.path | quote }}
+
+  DB_MAX_CONNS: {{ .Values.database.pool.maxConns | quote }}
+  DB_MIN_CONNS: {{ .Values.database.pool.minConns | quote }}
+  DB_MIN_IDLE_CONNS: {{ .Values.database.pool.minIdleConns | quote }}
+  {{- range $key, $value := .Values.extraEnv }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
